@@ -44,3 +44,35 @@ void printBoardToTerminal(char board[8][8]){
         printf("\n---------------------------------\n");
     }
 }
+
+void clearLegalMoves (char legalMoves[100][5]){
+    //puts EOS into all entries of legalMoves
+    for (int i = 0; i < 100; i++){
+        legalMoves[i][0] = 0;
+    }
+}
+
+int determineLegalMoves(char legalMoves[100][5], int player, char board[8][8]){
+    //determines legal moves in position of board for player (0 for white, 1 for black) and writes them into LegalMoves array
+    //writes all moves into legalMoves first, then clears if it finds a capture move and only includes capture moves from then on
+    int out = 0
+    for (int i = 0; i < 8; i++){
+        for (int j = 0; j < 8; j++){
+            switch (board[i][j]-player*32){ //maps lowecases to uppercases if player==1, so we can write only cases for uppercase letters
+                case P: //TODO
+                    break;
+                case R: //TODO
+                    break;
+                case N: //TODO
+                    break;
+                case B: //TODO
+                    break;
+                case Q: //TODO
+                    break;
+                case K: //TODO
+                    break;
+            }
+        }
+    }
+
+}
