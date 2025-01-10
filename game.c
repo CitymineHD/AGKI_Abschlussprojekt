@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "antichess.h"
+#include "agent.h"
 
 int main(){
     //8x8 char-array to emulate the chess board, using chess notation for the pieces (with p for pawns), and uppercase for white, lowercase for black

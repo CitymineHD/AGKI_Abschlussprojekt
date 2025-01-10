@@ -3,3 +3,6 @@ agent_test.dSYM/Contents/Info.plist
 agent_test.dSYM/Contents/Resources/DWARF/agent_test
 agent_test.dSYM/Contents/Resources/Relocations/aarch64/agent_test.yml
 antichess
+agent_test
+.replaymemory
+a.out
