@@ -18,11 +18,33 @@ double invsig(double x){
 double* getExpected(char board[8][8], int player, int move, int outcome){
     //get desired values of output neurons based on move, board state and outcome of game (will need legalMoves function)
     double* expected = malloc(sizeof(double)*Number_of_Output_Neurons);
+    int sumLegalMoves = 0;
     for (int i = 0; i < Number_of_Output_Neurons; i++){
         if (legalMoves[i]){
-            if 
+            if (outcome == 1){
+                //won
+                if (i == move){
+                    expected[i]=1; //we want the move we took since we won with it
+                }else{
+                    expected[i]=0;  //we don't want the moves we didn't take since we won with the one we took
+                }
+            }else if (outcome == -1){
+                //lost
+                if (i == move){
+                    expected[i]=0; //we don't want the move we took since we lost with it
+                }else{
+                    expected[i]=1/(sumLegalMoves-1); //we want all other moves to be equally likely since we want one of them but can't say which one
+                }
+            }else if (outcome == 0){
+                //drew, we take half of both the win and loss calculations
+                if(i == move){
+                    expected[i]=0.5;
+                }else{
+                    expected[i]=0.5/(sumLegalMoves-1);
+                }
+            }
         }else{
-            expected[i]=0;
+            expected[i]=0; //we want no illegal moves
         }
     }
 }
