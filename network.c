@@ -12,7 +12,7 @@
 #define Number_of_Layer 3 //Input Layer + Hidden Layer + Output Layer
 
 double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons];
-double network_weights_output[Number_of_Output_Neurons][Number_of_Output_Neurons];
+double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons];
 double threshold[Number_of_Layer-1][Number_of_Output_Neurons];
 
 void initial_network_weights() {
