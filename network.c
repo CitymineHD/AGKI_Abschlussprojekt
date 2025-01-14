@@ -42,6 +42,22 @@ void initial_network_weights() {
     }
 }
 
+//TODO these
+
+void readFromFile(char *filename){
+    //reads all the weights and biases from filename into the arrays in order of declaration
+    FILE *f = fopen(filename, "r");
+
+    fclose(f);
+}
+
+void writeToFile(char *filename){
+    //writes all the weights and biases into filename in order of declaration
+    FILE *f = fopen(filename, "w");
+
+    fclose(f);
+}
+
 //sigmoid function
 double sigmoid(double x) {
     return 1 / (1 + exp(-x));
