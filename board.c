@@ -72,7 +72,7 @@ int determineLegalMoves(bool moves[4096], int player, char board[8][8]){
 
     bool _acceptAllMoves = true;
     for (int i = 0; i < 8; i++){
-        for (int j = 0; j < 8; j++){ 
+        for (int j = 0; j < 8; j++){
             char piece = board[i][j] - player * 32; //maps lowecases to uppercases if player==1, so we can write only cases for uppercase letters
             //only the pieces of the player who has the turn get checked
             switch (piece){
@@ -257,5 +257,35 @@ int determineLegalMoves(bool moves[4096], int player, char board[8][8]){
                 }
             }
         }
+
         return numbersOfAllPossibleMoves;
+    }
+
+    int decToOct(int dec){//decimal number to octal number
+        int oct[4];
+        for (int i = 3; i >= 0; i--){
+            oct[i] = dec % 8;
+            dec /= 8;
+        }
+
+        int erg = oct[0] * 1000 + oct[1] * 100 + oct[2] * 10 + oct[3];
+        return erg;
+    }
+
+    void splitMoveIntoSingleDigits(int moveData[4], int move){
+        //quick and dirty
+        moveData[0] = move / 1000;
+        moveData[1] = (move / 100) % 10;
+        moveData[2] = (move / 10) % 10;
+        moveData[3] = move % 10;
+    }
+
+    void updateBoard(char board[8][8], int move){ // move value between 0 and 4095
+        //transform the decimal int to an octal int and splits i  into its single digits
+        int moveData[4];
+        splitMoveIntoSingleDigits(moveData, decToOct(move));
+
+        //Perform the Move
+        board[moveData[2]][moveData[3]] = board[moveData[0]][moveData[1]];
+        board[moveData[0]][moveData[1]] = ' ';
     }
