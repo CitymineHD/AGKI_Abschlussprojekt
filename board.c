@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "antichess.h"
+
 
 //setting up the pieces in starting position
 void initializeBoard(char board[8][8]){
@@ -45,35 +47,215 @@ void printBoardToTerminal(char board[8][8]){
     }
 }
 
-void clearLegalMoves(char legalMoves[100][5]){
-    //puts EOS into all entries of legalMoves
-    for (int i = 0; i < 100; i++){
-        legalMoves[i][0] = 0;
+void clearMoves (bool moves[4096]){
+    for (int i = 0; i < 4096; i++){
+        moves[i] = false;
     }
 }
 
-int determineLegalMoves(char legalMoves[100][5], int player, char board[8][8]){
-    //determines legal moves in position of board for player (0 for white, 1 for black) and writes them into LegalMoves array
-    //writes all moves into legalMoves first, then clears if it finds a capture move and only includes capture moves from then on
-    //for ease: castle not allowed, no en passent, pawns just vanish on promotion
-    int out = 0;
+int moveToInt(char a, char b, char c, char d){
+    return a * 8 * 8 * 8 + b * 8 * 8 + c * 8 + d;
+}
+
+int determineLegalMoves(bool moves[4096], int player, char board[8][8]){
+    //determines legal moves in position of board for player (1 for white, 0 for black) and writes them into a bool array (moves)
+    //every 4096 values of the bool array stands for a move where the first two letters is the i (1-8) and the j (A-H) location of the piece and
+    // the next two letters are for the i and j possition of the aim of the piece
+    //for ease: castle not allowed, no en passent, pawns just vanish on promotion    
+    int numbersOfAllPossibleMoves = 0;
+
+    int OPTIONS = 4096; // Constant for all Moves
+    //bool moves[OPTIONS]; // Saves every possible move for one player at a direct position
+    for (int i = 0; i< OPTIONS; i++){ // Set every value on false;
+        moves[i] = false;
+    }
+
+    bool _acceptAllMoves = true;
     for (int i = 0; i < 8; i++){
-        for (int j = 0; j < 8; j++){
-            switch (board[i][j]-player*32){ //maps lowecases to uppercases if player==1, so we can write only cases for uppercase letters
-                case P: //TODO
+        for (int j = 0; j < 8; j++){ 
+            char piece = board[i][j] - player * 32; //maps lowecases to uppercases if player==1, so we can write only cases for uppercase letters
+            //only the pieces of the player who has the turn get checked
+            switch (piece){
+                case 'P':
+                    //Pawns can only move in one direction (not the BoyBand)
+                    //therefor a seperated check for each player
+                    if (!player){ // black
+                        //checks if pawn can move 1 forward and 2 forward if its on line 7 
+                        if (board[i-1][j] == ' '){
+                            if (_acceptAllMoves){
+                                moves[moveToInt(i,j,i-1,j)]  = true;
+                                numbersOfAllPossibleMoves++;
+                                if (i == 6){
+                                    if (board[i-2][j] == ' '){
+                                        moves[moveToInt(i,j,i-2,j)] = true;
+                                        numbersOfAllPossibleMoves++;
+                                    }
+                                }
+                            }
+                        }
+                        //checks if the move is out of board
+                        if (j-1 < 0 || j+1 > 7){
+                            break;
+                        //checks if the pawn can captcher another piece
+                        } else {
+                            if (board[i-1][j+1] >= 'a' - player * 32 && board[i-1][j+1] <= 'z' - player * 32){
+                                if (_acceptAllMoves){ // Only clears all Moves once at the first time a take move got located.
+                                    _acceptAllMoves = false;
+                                    clearMoves(moves);
+                                    numbersOfAllPossibleMoves = 0;
+                                }
+
+                                moves[moveToInt(i,j,i-1,j+1)]  = true;
+                                numbersOfAllPossibleMoves++;
+                            }
+
+                            if (board[i-1][j-1] >= 'a' - player * 32 && board[i-1][j-1] <= 'z' - player * 32){
+                                if (_acceptAllMoves){
+                                    _acceptAllMoves = false;
+                                    clearMoves(moves);
+                                    numbersOfAllPossibleMoves = 0;
+                                }
+
+                                moves[moveToInt(i,j,i-1,j-1)]  = true;
+                                numbersOfAllPossibleMoves++;
+                            }
+                        }
+                    } else { //white
+                        if (board[i+1][j] == ' '){
+                            if (_acceptAllMoves){
+                                moves[moveToInt(i,j,i+1,j)]  = true;
+                                numbersOfAllPossibleMoves++;
+                                if (i == 1){
+                                    if (board[i+2][j] == ' '){
+                                        moves[moveToInt(i,j,i+2,j)]  = true;
+                                        numbersOfAllPossibleMoves++;
+                                    }
+                                }
+                            }
+                        }
+                        //checks if the move is out of board
+                        if (j-1 < 0 || j+1 > 7){
+                            break;
+                        //checks if the pawn can captcher another piece
+                        } else {
+                            if (board[i+1][j+1] >= 'a' - player * 32 && board[i+1][j+1] <= 'z' - player * 32){
+                                if (_acceptAllMoves){ // Only clears all Moves once at the first time a take move got located.
+                                    _acceptAllMoves = false;
+                                    clearMoves(moves);
+                                    numbersOfAllPossibleMoves = 0;
+                                }
+
+                                moves[moveToInt(i,j,i+1,j+1)]  = true;
+                                numbersOfAllPossibleMoves++;
+                            }
+
+                            if (board[i+1][j-1] >= 'a' - player * 32 && board[i+1][j-1] <= 'z' - player * 32){
+                                if (_acceptAllMoves){
+                                    _acceptAllMoves = false;
+                                    clearMoves(moves);
+                                    numbersOfAllPossibleMoves = 0;
+                                }
+
+                                moves[moveToInt(i,j,i+1,j-1)]  = true;
+                                numbersOfAllPossibleMoves++;
+                            }
+                        }
+                    }
+
                     break;
-                case R: //TODO
+                case 'N':
+                    //direction
+                    for (int d = 1; d < 9; d++){
+                        //Knight moves are 2 fields in one direction and 1 in the other direction 90 Degrie to the first direction 
+                        //Locats the knights moves
+                        int iDirection, jDirection;        
+                        iDirection = d % 4 == 0 ? -1 : d % 4 == 1 ? 1 : d % 4 == 2 ? 2 : -2;
+                        if (d < 5){ // gives the right j values for the i values so the knight can jump 2 forward and 1 sidewards
+                            jDirection = d % 4 == 0 ? 2 : d % 4 == 1 ? -2 : d % 4 == 2 ? -1 : 1;
+                        } else { //mirrors the first half
+                            jDirection = d % 4 == 0 ? -2 : d % 4 == 1 ? 2 : d % 4 == 2 ? 1 : -1;
+                        }
+                        
+                        //Checks if the Move is inside the board
+                        if ((i + iDirection < 0  || i + iDirection > 7) ||(j + jDirection < 0 || j + jDirection > 7)){
+                            continue;
+                        }
+                        //checks if the located position is empty
+                        if (board[i + iDirection][j + jDirection] == ' '){
+                            if (_acceptAllMoves){
+                                moves[moveToInt(i,j,i + iDirection, j + jDirection)]  = true;
+                                numbersOfAllPossibleMoves++;
+                            }
+                        // checks if the piece on the position is an enemy or an ally
+                        } else {
+                            if (board[i + iDirection][j + jDirection] >= 'a' - player * 32 && board[i + iDirection][j + jDirection] <= 'z' - player * 32){
+                                if (_acceptAllMoves){
+                                    _acceptAllMoves = false;
+                                    clearMoves(moves);
+                                    numbersOfAllPossibleMoves = 0;
+                                }
+
+                                moves[moveToInt(i,j,i + iDirection,j + jDirection)]  = true;
+                                numbersOfAllPossibleMoves++;
+                            }
+
+                        }
+                    }
+                           
                     break;
-                case N: //TODO
+                case 'R':
+                case 'B':
+                case 'Q':
+                case 'K':
+                    int iD, jD;
+                    //direction
+                    for (int d = 1; d < 9 ; d++){ //its starts at 1 and end at 8 so its easier for the % 3 opperation to locate the direction
+                        //Locates the Direction of the piece (Goes in every Direction around the piece)
+                        int iDirection, jDirection;
+                        iDirection = d % 3 == 0 ? 0 : d % 3 == 1 ? 1 : -1;
+                        jDirection = d / 3 == 0 ? 0 : d / 3 == 1 ? 1 : -1;
+                        
+                        int movesInDirection = piece == 'K' ? 2 : 10; //The King can only Move 1 square in every Direction
+                            
+                        //Checks that the right piece only moves in the right direction
+                        if ((piece == 'B') && (d > 0 && d < 4 || d == 6 )){
+                            continue;
+                        }
+
+                        if ((piece == 'R') && (d > 3 && d < 9 && d != 6)){
+                            continue;
+                        }
+
+                        for (int r = 1; r < movesInDirection; r++){ // range
+                            iD = i + (r * iDirection);
+                            jD = j + (r * jDirection);
+                            if ((iD < 0 || iD > 7) || (jD < 0 || jD > 7)){ //Checks if the Move is on the board
+                                break;
+                            } else if (board[iD][jD] == ' '){
+                                if (_acceptAllMoves){
+                                    moves[moveToInt(i,j,iD, jD)]  = true;
+                                    numbersOfAllPossibleMoves++;
+                                }
+                            } else {
+                                if (board[iD][jD] >= 'a' - player * 32 && board[iD][jD] <= 'z' - player * 32){
+                                    if (_acceptAllMoves){
+                                        _acceptAllMoves = false;
+                                        clearMoves(moves);
+                                        numbersOfAllPossibleMoves = 0;
+                                    }
+
+                                    moves[moveToInt(i,j,iD,jD)]  = true;
+                                    numbersOfAllPossibleMoves++;
+                                }
+
+                                break; //After the piece hit a piece the loop should end
+                            }
+                        }
+                    }
+
                     break;
-                case B: //TODO
-                    break;
-                case Q: //TODO
-                    break;
-                case K: //TODO
-                    break;
+                }
             }
         }
+        return numbersOfAllPossibleMoves;
     }
-
-}
