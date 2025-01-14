@@ -6,22 +6,8 @@
 
 #include "agent.h"
 
-#define Number_of_Input_Neurons 65
-#define Number_of_Hidden_Neurons 2747
-#define Number_of_Output_Neurons 4096
-
-#define Number_of_Layer 3 //Input Layer + Hidden Layer + Output Layer
-
-double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons];
-double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons];
-double threshold[Number_of_Layer-1][Number_of_Output_Neurons];
-
-double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons];
-
-bool legal_moves[4096]; //TODO: Implement Array from Philipp and get updating function
-
 //initial network weights  and thresholds randomly
-void initial_network_weights() {
+void initial_network_weights(double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons]) {
     srand((unsigned int)time(NULL)); //:-) the easiest way
     for (int n = 0; n < Number_of_Hidden_Neurons; n++) {
             for (int x = 0; x < Number_of_Input_Neurons; x++) {
@@ -38,6 +24,24 @@ void initial_network_weights() {
     for (int n = 0; n < (Number_of_Layer-1); n++) {
         for (int i = 0; i < Number_of_Output_Neurons; i++) {
             threshold[n][i] = 0.5;
+        }
+    }
+}
+
+void softmax(double *output, double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons], bool legal_moves[Number_of_Output_Neurons]) {
+    double divisor = 0;
+
+    for (int i = 0; i < Number_of_Output_Neurons; i++) {
+        if (legal_moves[i]) {
+            divisor += activated_neurons[Number_of_Layer-2][i];
+        }
+    }
+
+    for (int i = 0; i < Number_of_Output_Neurons; i++) {
+        if (legal_moves[i]) {
+            output[i] = activated_neurons[Number_of_Layer-2][i] / divisor;
+        } else {
+            output[i] = 0;
         }
     }
 }
@@ -63,7 +67,7 @@ double sigmoid(double x) {
     return 1 / (1 + exp(-x));
 }
 
-void output_layer(int layer, int neuron_number, int player) {
+void output_layer(int layer, int neuron_number, int player, double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]) {
     double sum = 0;
     for (int n = 0; n < Number_of_Output_Neurons; n++) {
         sum += activated_neurons[layer-2][n] * network_weights_output[neuron_number][n];
@@ -73,7 +77,7 @@ void output_layer(int layer, int neuron_number, int player) {
     activated_neurons[layer-1][neuron_number] = sigmoid(sum);
 }
 
-void hidden_layer(int layer, int neuron_number, int temp_board[8][8], int player) {
+void hidden_layer(int layer, int neuron_number, int temp_board[8][8], int player, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]) {
     double sum = 0;
     if (!layer) {
         for (int x = 0; x < 8; x++) {
@@ -92,7 +96,7 @@ void hidden_layer(int layer, int neuron_number, int temp_board[8][8], int player
     activated_neurons[layer][neuron_number] = sigmoid(sum);
 }
 
-void input_layer(char board[8][8], int player) {
+void input_layer(char board[8][8], int player, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]) {
     int temp_board[8][8];
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
@@ -103,21 +107,17 @@ void input_layer(char board[8][8], int player) {
     for (int l = 0; l < (Number_of_Layer-1); l++) {
         if (l != (Number_of_Layer-2)) {
             for (int n = 0; n < Number_of_Hidden_Neurons; n++) {
-                hidden_layer(l, n, temp_board, player);
+                hidden_layer(l, n, temp_board, player, network_weights_input, threshold, activated_neurons);
             }
         } else {
             for (int n = 0; n < Number_of_Output_Neurons; n++) {
-                output_layer((Number_of_Layer-1), n, player);
+                output_layer((Number_of_Layer-1), n, player, network_weights_output, threshold, activated_neurons);
             }
         }
     }
 }
 
 //backprop stuff (in same file now to use global variables easily)
-
-double deltaInputWeights[Number_of_Hidden_Neurons][Number_of_Input_Neurons];    //array for the summed up gradients for weights between input and hidden layer and hidden and output layer (respectively), needs to be multiplied by eta and then added to the actual network
-double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons];  //order is [intoNeuronNumber][outOfNeuronNumber]
-double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons];            //same, but for biases, [layerNumber][neuronNumber], layer 0 is first hidden layer
 
 double sigderiv(double x){
     //derivative of sigmoid for gradient calculations
@@ -130,7 +130,7 @@ double invsig(double x){
 }
 
 //TODO get legalMoves
-double* getExpected(char board[8][8], int player, int move, int outcome){
+double* getExpected(char board[8][8], int player, int move, int outcome, bool legal_moves[Number_of_Output_Neurons]){
     //get desired values of output neurons based on move, board state and outcome of game (will need legalMoves function)
     double* expected = malloc(sizeof(double)*Number_of_Output_Neurons);
     int sumLegalMoves = 0;
@@ -162,14 +162,14 @@ double* getExpected(char board[8][8], int player, int move, int outcome){
             expected[i]=0; //we want no illegal moves
         }
     }
+    return expected;
 }
 
-void backpropStep(char board[8][8], int player, int move, int outcome) {
+void backpropStep(char board[8][8], int player, int move, int outcome, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons], bool legal_moves[Number_of_Output_Neurons], double deltaInputWeights[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons]) {
     //calculates the gradients of cost function with respect to the weights and biases for one move in one specified board state considering whether or not the agent won (outcome is 1 if won, -1 if lost, 0 if draw)
     //sums them up and writes them into deltaWeights and deltaThresholds, they will need to be eta'd and added outside of this function
-    double *expected = getExpected(board, move, player, outcome); //desired outputs to calculate cost function (e_n in scribbles) is a pointer, gets sizeofdouble**Number_of_Output_Neurons memory
-    double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]; //actual values of the neurons in calculations (a_i_n in scribbles), global variables, need to run network to get these into the right values for current move
-    input_layer(board, player); //rerunning network for current board state to get values into activated_neurons, we could also save these over the course of a game but that would take a lot of memory
+    double *expected = getExpected(board, move, player, outcome, legal_moves); //desired outputs to calculate cost function (e_n in scribbles) is a pointer, gets sizeofdouble**Number_of_Output_Neurons memory
+    input_layer(board, player, network_weights_input, network_weights_output, threshold, activated_neurons); //rerunning network for current board state to get values into activated_neurons, we could also save these over the course of a game but that would take a lot of memory
     int inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
@@ -207,6 +207,18 @@ void backpropStep(char board[8][8], int player, int move, int outcome) {
 }
 
 void run_network(char board[8][8], int player) {
+    double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons];
+    double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons];
+    double threshold[Number_of_Layer-1][Number_of_Output_Neurons];
+
+    double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons];
+
+    bool legal_moves[Number_of_Output_Neurons];
+
+    double deltaInputWeights[Number_of_Hidden_Neurons][Number_of_Input_Neurons];    //array for the summed up gradients for weights between input and hidden layer and hidden and output layer (respectively), needs to be multiplied by eta and then added to the actual network
+    double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons];  //order is [intoNeuronNumber][outOfNeuronNumber]
+    double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons];            //same, but for biases, [layerNumber][neuronNumber], layer 0 is first hidden layer
+
     //run the network with the current board state and the player who's the next
-    input_layer(board, player);
+    input_layer(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
 }
