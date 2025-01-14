@@ -42,22 +42,6 @@ void initial_network_weights() {
     }
 }
 
-//TODO these
-
-void readFromFile(char *filename){
-    //reads all the weights and biases from filename into the arrays in order of declaration
-    FILE *f = fopen(filename, "r");
-
-    fclose(f);
-}
-
-void writeToFile(char *filename){
-    //writes all the weights and biases into filename in order of declaration
-    FILE *f = fopen(filename, "w");
-
-    fclose(f);
-}
-
 //sigmoid function
 double sigmoid(double x) {
     return 1 / (1 + exp(-x));
@@ -92,24 +76,6 @@ void hidden_layer(int layer, int neuron_number, int temp_board[8][8], int player
     activated_neurons[layer][neuron_number] = sigmoid(sum);
 }
 
-void softmax(double *output) {
-    double divisor = 0;
-
-    for (int i = 0; i < Number_of_Output_Neurons; i++) {
-        if (legal_moves[i]) {
-            divisor += activated_neurons[Number_of_Layer-2][i];
-        }
-    }
-
-    for (int i = 0; i < Number_of_Output_Neurons; i++) {
-        if (legal_moves[i]) {
-            output[i] = activated_neurons[Number_of_Layer-2][i] / divisor;
-        } else {
-            output[i] = 0;
-        }
-    }
-}
-
 void input_layer(char board[8][8], int player) {
     int temp_board[8][8];
     for (int x = 0; x < 8; x++) {
@@ -119,7 +85,7 @@ void input_layer(char board[8][8], int player) {
     }
 
     for (int l = 0; l < (Number_of_Layer-1); l++) {
-        if (l != (Number_of_Layer-1)) {
+        if (l != (Number_of_Layer-2)) {
             for (int n = 0; n < Number_of_Hidden_Neurons; n++) {
                 hidden_layer(l, n, temp_board, player);
             }
@@ -222,4 +188,9 @@ void backpropStep(char board[8][8], int player, int move, int outcome) {
     }
     //FREE THEM MALLOCS
     free(expected);
+}
+
+void run_network(char board[8][8], int player) {
+    //run the network with the current board state and the player who's the next
+    input_layer(board, player);
 }

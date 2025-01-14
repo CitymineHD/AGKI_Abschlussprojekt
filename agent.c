@@ -57,7 +57,7 @@ int main() {
     double output[4096];
     initial_network_weights();
     initializeBoard(board);
-    input_layer(board, 1, output);
+    run_network(board, 1);
 
     int max_position = -1;
     double max_value = 0;

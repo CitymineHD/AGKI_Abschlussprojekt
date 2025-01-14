@@ -6,3 +6,4 @@ antichess
 agent_test
 .replaymemory
 a.out
+agent.c
