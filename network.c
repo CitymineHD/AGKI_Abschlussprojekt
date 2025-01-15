@@ -199,7 +199,7 @@ void getNeurons(int inputNeurons[Number_of_Input_Neurons], double network_weight
         }
         sum += threshold[0][i];
         nosigNeurons[0][i] = sum;
-        //activated_neurons[0][i] = sigmoid(sum);
+        activated_neurons[0][i] = sigmoid(sum);
     }
     //for output neurons
     for (int i = 0; i < Number_of_Output_Neurons; i++){
@@ -209,7 +209,7 @@ void getNeurons(int inputNeurons[Number_of_Input_Neurons], double network_weight
         }
         sum += threshold[1][i];
         nosigNeurons[1][i] = sum;
-        //activated_neurons[1][i] = sigmoid(sum);
+        activated_neurons[1][i] = sigmoid(sum);
     }
 }
 
@@ -218,7 +218,7 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
     //sums them up and writes them into deltaWeights and deltaThresholds, they will need to be eta'd and added outside of this function
     double *expected = getExpected(board, player, move, outcome, legal_moves); //desired outputs to calculate cost function (e_n in scribbles) is a pointer, gets sizeofdouble**Number_of_Output_Neurons memory
     double nosigNeurons[Number_of_Layer-1][Number_of_Output_Neurons]; //saving neurons without sigmoid squish, because invsig got unfriendly when close to desired output
-    input_layer(board, player, network_weights_input, network_weights_output, threshold, activated_neurons); //rerunning network for current board state to get values into activated_neurons, we could also save these over the course of a game but that would take a lot of memory
+    //input_layer(board, player, network_weights_input, network_weights_output, threshold, activated_neurons); //rerunning network for current board state to get values into activated_neurons, we could also save these over the course of a game but that would take a lot of memory
     int inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
@@ -232,7 +232,7 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
     for (int i = 0; i < Number_of_Output_Neurons; i++) {
         double preFactor = (activated_neurons[Number_of_Layer-2][i]-expected[i])*(sigderiv(nosigNeurons[1][i])); //factor that is the same for all the gradients
         expected[i] = 0; //reuse expectation array to save expectations for previous layer (value is used for the only time in the line above)
-        deltaThresholds[Number_of_Layer-2][i] +=preFactor; //gradient for bias, (since inner derivative of sigmoid for b is 1, this is just preFactor)
+        deltaThresholds[Number_of_Layer-2][i] += preFactor; //gradient for bias, (since inner derivative of sigmoid for b is 1, this is just preFactor)
         //loop for all the weights going into a_i
         for (int j = 0; j < Number_of_Hidden_Neurons; j++){
             deltaOutputWeights[i][j] += preFactor*activated_neurons[0][j];
