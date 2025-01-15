@@ -30,7 +30,7 @@ int main(void){
     for (int j = 0; j < 4; j++){
         for (int i = 0; i < 100; i++)
             backpropStep(board, player, 796, 1, network_weights_input, network_weights_output, threshold, activated_neurons, legal_moves, deltaInputWeights, deltaOutputWeights, deltaThresholds);
-        applyDeltas(network_weights_input, network_weights_output, threshold, deltaInputWeights, deltaOutputWeights, deltaThresholds, 0.000001);
+        applyDeltas(network_weights_input, network_weights_output, threshold, deltaInputWeights, deltaOutputWeights, deltaThresholds, 0.0000001);
         run_network(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
         printf("after 100    backprop step, neuron fires at %f, bias is %0.20f and weight %d is %.20f\n", activated_neurons[1][796], threshold[1][796], weightToCheck, network_weights_output[796][weightToCheck]);
     }
