@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #define Number_of_Input_Neurons 65
 #define Number_of_Hidden_Neurons 2747
 #define Number_of_Output_Neurons 4096

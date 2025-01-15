@@ -46,8 +46,6 @@ void softmax(double *output, double activated_neurons[Number_of_Layer-1][Number_
     }
 }
 
-//TODO these
-
 void readFromFile(char *filename){
     //reads all the weights and biases from filename into the arrays in order of declaration
     FILE *f = fopen(filename, "r");
@@ -55,9 +53,30 @@ void readFromFile(char *filename){
     fclose(f);
 }
 
-void writeToFile(char *filename){
+void writeToFile(char *filename, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons], double deltaInputWeights[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons]){
     //writes all the weights and biases into filename in order of declaration
     FILE *f = fopen(filename, "w");
+
+    fprintf(f, "Number of Input Neuron, Weight, DeltaWeight, activated_neuron\n");
+    for (int i = 0; i < Number_of_Hidden_Neurons; i++){
+        for (int j = 0; j < Number_of_Input_Neurons; j++){
+            fprintf(f, "%d: %f, %f, %f\n", i, network_weights_input[i][j], deltaInputWeights[i][j], activated_neurons[i][j]);
+        }
+    }
+    fprintf(f, "Number of Output Neuron, Weight, DeltaWeight\n");
+    //for output layer
+    for (int i = 0; i < Number_of_Output_Neurons; i++){
+        for (int j = 0; j < Number_of_Hidden_Neurons; j++){
+            fprintf(f, "%d: %f, %f, %f\n", i, network_weights_output[i][j], deltaOutputWeights[i][j], activated_neurons[i][j]);
+        }
+    }
+    fprintf(f, "Number of Layer/Neuron, Threshold, DeltaThreshold\n");
+    //for biases
+    for (int i = 0; i < Number_of_Layer-1; i++){
+        for (int j = 0; j < Number_of_Output_Neurons; j++){
+            fprintf(f, "%d/%d: %f, %f\n", i, j, threshold[i][j], deltaThresholds[i][j]);
+        }
+    }
 
     fclose(f);
 }
