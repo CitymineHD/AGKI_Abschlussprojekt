@@ -25,13 +25,15 @@ int main(void){
     initializeDeltas(deltaInputWeights, deltaOutputWeights, deltaThresholds);
     initial_network_weights(network_weights_input, network_weights_output, threshold);
     run_network(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
-    writeToFile("testNetwork", network_weights_input, network_weights_output, threshold);
     determineLegalMoves(legal_moves, player, board);
-    printf("this is test. pls take a moment to pray this shit works.\n                       neuron for e2e4: %f, and bias is %.20f and weight %d is %.20f\n", activated_neurons[1][796], threshold[1][796], weightToCheck, network_weights_output[796][weightToCheck]);
-    backpropStep(board, player, 796, player, network_weights_input, network_weights_output, threshold, activated_neurons, legal_moves, deltaInputWeights, deltaOutputWeights, deltaThresholds);
-    applyDeltas(network_weights_input, network_weights_output, threshold, deltaInputWeights, deltaOutputWeights, deltaThresholds, 0.0001);
-    run_network(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
-    printf("after single backprop step, neuron fires at %f, bias is %0.20f and weight %d is %.20f\n", activated_neurons[1][796], threshold[1][796], weightToCheck, network_weights_output[796][weightToCheck]);
-
+    printf("this is test. pls take a moment to pray this shit works.\n               neuron for e2e4:             %f, bias is %.20f and weight %d is %.20f\n", activated_neurons[1][796], threshold[1][796], weightToCheck, network_weights_output[796][weightToCheck]);
+    for (int j = 0; j < 4; j++){
+        for (int i = 0; i < 100; i++)
+            backpropStep(board, player, 796, 1, network_weights_input, network_weights_output, threshold, activated_neurons, legal_moves, deltaInputWeights, deltaOutputWeights, deltaThresholds);
+        applyDeltas(network_weights_input, network_weights_output, threshold, deltaInputWeights, deltaOutputWeights, deltaThresholds, 0.000001);
+        run_network(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
+        printf("after 100    backprop step, neuron fires at %f, bias is %0.20f and weight %d is %.20f\n", activated_neurons[1][796], threshold[1][796], weightToCheck, network_weights_output[796][weightToCheck]);
+    }
+    writeToFile("testNetwork", network_weights_input, network_weights_output, threshold);
     return 0;
 }

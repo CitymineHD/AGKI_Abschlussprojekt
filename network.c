@@ -61,27 +61,21 @@ void writeToFile(char *filename, double network_weights_input[Number_of_Hidden_N
         for (int j = 0; j < Number_of_Input_Neurons; j++){
             fprintf(f, "%d: %f\n", i, network_weights_input[i][j]);
         }
-        printf("I");
     }
-    printf("Done\n");
     fprintf(f, "Number of Output Neuron, Weight\n");
     //for output layer
     for (int i = 0; i < Number_of_Output_Neurons; i++){
         for (int j = 0; j < Number_of_Hidden_Neurons; j++){
             fprintf(f, "%d: %f\n", i, network_weights_output[i][j]);
         }
-        printf("A");
     }
-    printf("Done\n");
     fprintf(f, "Number of Layer/Neuron, Threshold\n");
     //for biases
     for (int i = 0; i < Number_of_Layer-1; i++){
         for (int j = 0; j < Number_of_Output_Neurons; j++){
             fprintf(f, "%d/%d: %f\n", i, j, threshold[i][j]);
         }
-        printf("B");
     }
-    printf("Done\n");
 
     fclose(f);
 }
@@ -96,7 +90,7 @@ void output_layer(int layer, int neuron_number, int player, double network_weigh
     for (int n = 0; n < Number_of_Hidden_Neurons; n++) {
         sum += activated_neurons[layer-2][n] * network_weights_output[neuron_number][n];
     }
-    sum += threshold[layer-2][neuron_number];
+    sum += threshold[layer-1][neuron_number];
 
     activated_neurons[layer-1][neuron_number] = sigmoid(sum);
 }
@@ -114,8 +108,8 @@ void hidden_layer(int layer, int neuron_number, int temp_board[8][8], int player
         for (int n = 0; n < Number_of_Hidden_Neurons; n++) {
             sum += activated_neurons[layer-1][n] * network_weights_input[neuron_number][n];
         }
+        sum += threshold[layer][neuron_number];
     }
-    sum += threshold[layer][neuron_number];
 
     activated_neurons[layer][neuron_number] = sigmoid(sum);
 }
@@ -192,7 +186,7 @@ double* getExpected(char board[8][8], int player, int move, int outcome, bool le
 void backpropStep(char board[8][8], int player, int move, int outcome, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons], bool legal_moves[Number_of_Output_Neurons], double deltaInputWeights[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons]) {
     //calculates the gradients of cost function with respect to the weights and biases for one move in one specified board state considering whether or not the agent won (outcome is 1 if won, -1 if lost, 0 if draw)
     //sums them up and writes them into deltaWeights and deltaThresholds, they will need to be eta'd and added outside of this function
-    double *expected = getExpected(board, move, player, outcome, legal_moves); //desired outputs to calculate cost function (e_n in scribbles) is a pointer, gets sizeofdouble**Number_of_Output_Neurons memory
+    double *expected = getExpected(board, player, move, outcome, legal_moves); //desired outputs to calculate cost function (e_n in scribbles) is a pointer, gets sizeofdouble**Number_of_Output_Neurons memory
     input_layer(board, player, network_weights_input, network_weights_output, threshold, activated_neurons); //rerunning network for current board state to get values into activated_neurons, we could also save these over the course of a game but that would take a lot of memory
     int inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
@@ -210,7 +204,8 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
         //loop for all the weights going into a_i
         for (int j = 0; j < Number_of_Hidden_Neurons; j++){
             deltaOutputWeights[i][j] += preFactor*activated_neurons[Number_of_Layer-3][j];
-            expected[j] += preFactor*network_weights_output[i][j];   //reusing expected for gradients of next neurons here, which segFaults if hiddenNeurons > outputNeurons, but works for us
+            expected[j] += preFactor*network_weights_output[i][j]/Number_of_Output_Neurons;   //reusing expected for gradients of next neurons here, which segFaults if hiddenNeurons > outputNeurons, but works for us
+            //TODO THIS ADDS UP TO VERY BIG STUFFSIES, multiply with eta or divide by number of neurons generating the input
         }
     }
     //now expected is overwritten with the gradients that we want the neurons in the hidden layer to have, we will use those in the next step
@@ -260,24 +255,26 @@ void initializeDeltas(double deltaInputWeights[Number_of_Hidden_Neurons][Number_
 void applyDeltas(double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double deltaInputWeights[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons], double eta){
     //applies deltas for all weights and biases to the actual values, multiplying them by the step width eta
     //then resets deltas to 0
+    //subtracts because we are following negative gradient
+
     //for input layer
     for (int i = 0; i < Number_of_Hidden_Neurons; i++){
         for (int j = 0; j < Number_of_Input_Neurons; j++){
-            network_weights_input[i][j] += eta*deltaInputWeights[i][j];
+            network_weights_input[i][j] -= eta*deltaInputWeights[i][j];
             deltaInputWeights[i][j] = 0;
         }
     }
     //for output layer
     for (int i = 0; i < Number_of_Output_Neurons; i++){
         for (int j = 0; j < Number_of_Hidden_Neurons; j++){
-            network_weights_output[i][j] += eta*deltaOutputWeights[i][j];
+            network_weights_output[i][j] -= eta*deltaOutputWeights[i][j];
             deltaOutputWeights[i][j] = 0;
         }
     }
     //for biases
     for (int i = 0; i < Number_of_Layer-1; i++){
         for (int j = 0; j < Number_of_Output_Neurons; j++){
-            threshold[i][j] += eta*deltaThresholds[i][j];
+            threshold[i][j] -= eta*deltaThresholds[i][j];
             deltaThresholds[i][j] = 0;
         }
     }

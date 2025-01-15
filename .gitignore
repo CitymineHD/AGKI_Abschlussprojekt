@@ -9,3 +9,5 @@ a.out
 agent.c
 backprop.c
 testNetwork
+testNetworkFailed
+SavedNetworks/*
