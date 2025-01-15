@@ -25,6 +25,7 @@ int main(void){
     initializeDeltas(deltaInputWeights, deltaOutputWeights, deltaThresholds);
     initial_network_weights(network_weights_input, network_weights_output, threshold);
     run_network(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
+    writeToFile("testNetwork", network_weights_input, network_weights_output, threshold);
     determineLegalMoves(legal_moves, player, board);
     printf("this is test. pls take a moment to pray this shit works.\n                       neuron for e2e4: %f, and bias is %.20f and weight %d is %.20f\n", activated_neurons[1][796], threshold[1][796], weightToCheck, network_weights_output[796][weightToCheck]);
     backpropStep(board, player, 796, player, network_weights_input, network_weights_output, threshold, activated_neurons, legal_moves, deltaInputWeights, deltaOutputWeights, deltaThresholds);
