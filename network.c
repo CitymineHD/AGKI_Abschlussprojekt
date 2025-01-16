@@ -199,7 +199,7 @@ void getNeurons(int inputNeurons[Number_of_Input_Neurons], double network_weight
         }
         sum += threshold[0][i];
         nosigNeurons[0][i] = sum;
-        activated_neurons[0][i] = sigmoid(sum);
+        //activated_neurons[0][i] = sigmoid(sum);
     }
     //for output neurons
     for (int i = 0; i < Number_of_Output_Neurons; i++){
@@ -209,6 +209,35 @@ void getNeurons(int inputNeurons[Number_of_Input_Neurons], double network_weight
         }
         sum += threshold[1][i];
         nosigNeurons[1][i] = sum;
+        //activated_neurons[1][i] = sigmoid(sum);
+    }
+}
+
+void runNetworkFlo(char board[8][8], int player, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]){
+    //different runNetwork for debugging
+    int inputNeurons[Number_of_Input_Neurons];
+    for (int i = 0; i < 8; i++){
+        for (int j = 0; j < 8; j++){
+            board[i][j]=inputNeurons[(i*8)+j]; //saving chars from board into inputNeurons
+        }
+    }
+    inputNeurons[Number_of_Input_Neurons-1] = player; // saving final input value that doesn't come from board array
+    //for hidden neurons
+    for (int i = 0; i < Number_of_Hidden_Neurons; i++){
+        double sum = 0;
+        for (int j = 0; j < Number_of_Input_Neurons; j++){
+            sum += network_weights_input[i][j]*inputNeurons[j];
+        }
+        sum += threshold[0][i];
+        activated_neurons[0][i] = sigmoid(sum);
+    }
+    //for output neurons
+    for (int i = 0; i < Number_of_Output_Neurons; i++){
+        double sum = 0;
+        for (int j = 0; j < Number_of_Hidden_Neurons; j++){
+            sum += network_weights_output[i][j]*activated_neurons[0][j];
+        }
+        sum += threshold[1][i];
         activated_neurons[1][i] = sigmoid(sum);
     }
 }
@@ -218,7 +247,7 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
     //sums them up and writes them into deltaWeights and deltaThresholds, they will need to be eta'd and added outside of this function
     double *expected = getExpected(board, player, move, outcome, legal_moves); //desired outputs to calculate cost function (e_n in scribbles) is a pointer, gets sizeofdouble**Number_of_Output_Neurons memory
     double nosigNeurons[Number_of_Layer-1][Number_of_Output_Neurons]; //saving neurons without sigmoid squish, because invsig got unfriendly when close to desired output
-    //input_layer(board, player, network_weights_input, network_weights_output, threshold, activated_neurons); //rerunning network for current board state to get values into activated_neurons, we could also save these over the course of a game but that would take a lot of memory
+    input_layer(board, player, network_weights_input, network_weights_output, threshold, activated_neurons); //rerunning network for current board state to get values into activated_neurons, we could also save these over the course of a game but that would take a lot of memory
     int inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
