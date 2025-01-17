@@ -146,14 +146,8 @@ void input_layer(char board[8][8], int player, double network_weights_input[Numb
 
 double sigderiv(double x){
     //derivative of sigmoid for gradient calculations
-    return exp(-x)/((exp(x)+1)*(exp(x)+1));
+    return exp(-x)/((exp(-x)+1)*(exp(-x)+1));
 }
-
-double invsig(double x){
-    //inverse of sigmoid function to avoid having to calculate big sums again when trying to get to the inside of the sigmoid of a neuron to derive it (luckily sigmoid has an inverse)
-    return log(x/(1-x));
-}
-
 
 double* getExpected(char board[8][8], int player, int move, int outcome, bool legal_moves[Number_of_Output_Neurons]){
     //get desired values of output neurons based on move, board state and outcome of game (will need legalMoves function)
@@ -219,7 +213,7 @@ void runNetworkFlo(char board[8][8], int player, double network_weights_input[Nu
     int inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
-            board[i][j]=inputNeurons[(i*8)+j]; //saving chars from board into inputNeurons
+            inputNeurons[(i*8)+j]=board[i][j]; //saving chars from board into inputNeurons
         }
     }
     inputNeurons[Number_of_Input_Neurons-1] = player; // saving final input value that doesn't come from board array
@@ -252,23 +246,25 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
     int inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
-            board[i][j]=inputNeurons[(i*8)+j]; //saving chars from board into inputNeurons
+            inputNeurons[(i*8)+j]=board[i][j]; //saving chars from board into inputNeurons
         }
     }
     inputNeurons[Number_of_Input_Neurons-1] = player; // saving final input value that doesn't come from board array
+    double hiddenNeuronDeriv[Number_of_Hidden_Neurons]; //array for derivative of hidden neurons as calculated from prev layer
+    for (int i = 0; i < Number_of_Hidden_Neurons; i++){
+        hiddenNeuronDeriv[i]=0;
+    }
     getNeurons(inputNeurons, network_weights_input, network_weights_output, threshold, activated_neurons, nosigNeurons);
     runNetworkFlo(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
     //START OF CALCULUS THINGS
     //loop for output layer going into hidden layer
     for (int i = 0; i < Number_of_Output_Neurons; i++) {
         double preFactor = (activated_neurons[Number_of_Layer-2][i]-expected[i])*(sigderiv(nosigNeurons[1][i])); //factor that is the same for all the gradients
-        expected[i] = 0; //reuse expectation array to save expectations for previous layer (value is used for the only time in the line above)
         deltaThresholds[Number_of_Layer-2][i] += preFactor; //gradient for bias, (since inner derivative of sigmoid for b is 1, this is just preFactor)
         //loop for all the weights going into a_i
         for (int j = 0; j < Number_of_Hidden_Neurons; j++){
             deltaOutputWeights[i][j] += preFactor*activated_neurons[0][j];
-            expected[j] += preFactor*network_weights_output[i][j];   //reusing expected for gradients of next neurons here, which segFaults if hiddenNeurons > outputNeurons, but works for us
-            //TODO THIS ADDS UP TO VERY BIG STUFFSIES, multiply with eta or divide by number of neurons generating the input
+            hiddenNeuronDeriv[j] += preFactor*network_weights_output[i][j];   //saving gradients of next neurons
         }
     }
     //now expected is overwritten with the gradients that we want the neurons in the hidden layer to have, we will use those in the next step
@@ -277,7 +273,7 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
     //
     //now we need to look at the first (in this case only) hidden layer without doing expected (because we can't gradient descent the input)
     for (int i = 0; i < Number_of_Hidden_Neurons; i++) {
-        double preFactor = expected[i]*(sigderiv(nosigNeurons[0][i])); //factor that is the same for all the gradients, expected is now used differently, because it is no longer the expected value, but now the expected change
+        double preFactor = hiddenNeuronDeriv[i]*(sigderiv(nosigNeurons[0][i])); //factor that is the same for all the gradients, this time with hiddenNeuronDeriv instead of cost function
         deltaThresholds[0][i] += preFactor; //gradient for bias
         //loop for all the weights going into a_i
         for (int j = 0; j < Number_of_Input_Neurons; j++){
