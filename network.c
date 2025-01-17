@@ -26,7 +26,7 @@ void initial_network_weights(double network_weights_input[Number_of_Hidden_Neuro
     //inital thresholds
     for (int n = 0; n < (Number_of_Layer-1); n++) {
         for (int i = 0; i < Number_of_Output_Neurons; i++) {
-            threshold[n][i] = 0.005;
+            threshold[n][i] = 0.0;
         }
     }
 }
@@ -184,7 +184,7 @@ double* getExpected(char board[8][8], int player, int move, int outcome, bool le
     return expected;
 }
 
-void getNeurons(int inputNeurons[Number_of_Input_Neurons], double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons], double nosigNeurons[Number_of_Layer-1][Number_of_Output_Neurons]){
+void getNeurons(double inputNeurons[Number_of_Input_Neurons], double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons], double nosigNeurons[Number_of_Layer-1][Number_of_Output_Neurons]){
     //summing up all the stuffs again for the neurons
     //for hidden neurons
     for (int i = 0; i < Number_of_Hidden_Neurons; i++){
@@ -210,10 +210,10 @@ void getNeurons(int inputNeurons[Number_of_Input_Neurons], double network_weight
 
 void runNetworkFlo(char board[8][8], int player, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]){
     //different runNetwork for debugging
-    int inputNeurons[Number_of_Input_Neurons];
+    double inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
-            inputNeurons[(i*8)+j]=board[i][j]; //saving chars from board into inputNeurons
+            inputNeurons[(i*8)+j]=board[i][j]/100; //saving chars from board into inputNeurons
         }
     }
     inputNeurons[Number_of_Input_Neurons-1] = player; // saving final input value that doesn't come from board array
@@ -243,10 +243,10 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
     double *expected = getExpected(board, player, move, outcome, legal_moves); //desired outputs to calculate cost function (e_n in scribbles) is a pointer, gets sizeofdouble**Number_of_Output_Neurons memory
     double nosigNeurons[Number_of_Layer-1][Number_of_Output_Neurons]; //saving neurons without sigmoid squish, because invsig got unfriendly when close to desired output
     //input_layer(board, player, network_weights_input, network_weights_output, threshold, activated_neurons); //rerunning network for current board state to get values into activated_neurons, we could also save these over the course of a game but that would take a lot of memory
-    int inputNeurons[Number_of_Input_Neurons];
+    double inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
-            inputNeurons[(i*8)+j]=board[i][j]; //saving chars from board into inputNeurons
+            inputNeurons[(i*8)+j]=board[i][j]/100; //saving chars from board into inputNeurons
         }
     }
     inputNeurons[Number_of_Input_Neurons-1] = player; // saving final input value that doesn't come from board array
@@ -267,11 +267,11 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
             hiddenNeuronDeriv[j] += preFactor*network_weights_output[i][j];   //saving gradients of next neurons
         }
     }
-    //now expected is overwritten with the gradients that we want the neurons in the hidden layer to have, we will use those in the next step
+    //now hiddenNeuronDeriv is filled with the gradients that we want the neurons in the hidden layer to have, we will use those in the next step
     //
     //here we would loop over the connections between hidden layers, but we only have one, so that isn't needed
     //
-    //now we need to look at the first (in this case only) hidden layer without doing expected (because we can't gradient descent the input)
+    //now we need to look at the first (in this case only) hidden layer without doing new neuron derivatives (because we can't gradient descent the input)
     for (int i = 0; i < Number_of_Hidden_Neurons; i++) {
         double preFactor = hiddenNeuronDeriv[i]*(sigderiv(nosigNeurons[0][i])); //factor that is the same for all the gradients, this time with hiddenNeuronDeriv instead of cost function
         deltaThresholds[0][i] += preFactor; //gradient for bias
