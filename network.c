@@ -90,6 +90,7 @@ double sigmoid(double x) {
 
 void output_layer(int layer, int neuron_number, int player, double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]) {
     double sum = 0;
+    //same as in the hidden
     for (int n = 0; n < Number_of_Hidden_Neurons; n++) {
         sum += activated_neurons[layer-2][n] * network_weights_output[neuron_number][n];
     }
@@ -102,14 +103,16 @@ void output_layer(int layer, int neuron_number, int player, double network_weigh
 
 void hidden_layer(int layer, int neuron_number, int temp_board[8][8], int player, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]) {
     double sum = 0;
+    //if the layer is 0, the current layer is the input-layer which contains the board state and player
     if (!layer) {
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
-                    sum += temp_board[x][y] * network_weights_input[neuron_number][(x * 8) + y];
+                    sum += temp_board[x][y] * network_weights_input[neuron_number][(x * 8) + y]; //convert 2d Array into normel array with x*8, which means the row, plus y, the number of the column
             }
         }
-        sum += player * network_weights_input[neuron_number][64];
+        sum += player * network_weights_input[neuron_number][64]; //add to sum the player, who is next
     } else {
+        //the "activated value" of each neuron is now the value to be multiplied by
         for (int n = 0; n < Number_of_Hidden_Neurons; n++) {
             sum += activated_neurons[layer-1][n] * network_weights_input[neuron_number][n];
         }
@@ -118,18 +121,19 @@ void hidden_layer(int layer, int neuron_number, int temp_board[8][8], int player
 
     //nosigNeurons[layer][neuron_number] = sum;
 
-    activated_neurons[layer][neuron_number] = sigmoid(sum);
+    activated_neurons[layer][neuron_number] = sigmoid(sum); //saving the return-value of the sigmoid function into the activated_neurons array
 }
 
 void input_layer(char board[8][8], int player, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]) {
     int temp_board[8][8];
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
-            temp_board[x][y] = board[x][y];
+            temp_board[x][y] = board[x][y]/100; //convert chars into integer
         }
     }
-
-    for (int l = 0; l < 2; l++) {
+    //starting network stuff
+    //to calc the "activated value" of each neuron, it calc out of the sum of the "actviated values" of the neurons one layer before
+    for (int l = 0; l < Number_of_Layer-1; l++) {
         if (l != 1) {
             for (int n = 0; n < Number_of_Hidden_Neurons; n++) {
                 hidden_layer(l, n, temp_board, player, network_weights_input, threshold, activated_neurons);
