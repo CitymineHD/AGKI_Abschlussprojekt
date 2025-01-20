@@ -94,32 +94,27 @@ int determineLegalMoves(bool moves[4096], int player, char board[8][8], bool *_i
                                 }
                             }
                         }
-                        //checks if the move is out of board
-                        if (j-1 < 0 || j+1 > 7){
-                            break;
                         //checks if the pawn can captcher another piece
-                        } else {
-                            if (board[i-1][j+1] >= 'a' - player * 32 && board[i-1][j+1] <= 'z' - player * 32){
-                                if (_acceptAllMoves){ // Only clears all Moves once at the first time a take move got located.
-                                    _acceptAllMoves = false;
-                                    clearMoves(moves);
-                                    numbersOfAllPossibleMoves = 0;
-                                }
-
-                                moves[moveToInt(i,j,i-1,j+1)]  = true;
-                                numbersOfAllPossibleMoves++;
+                        if (j+1 <= 7 && board[i-1][j+1] >= 'a' - player * 32 && board[i-1][j+1] <= 'z' - player * 32){
+                            if (_acceptAllMoves){ // Only clears all Moves once at the first time a take move got located.
+                                _acceptAllMoves = false;
+                                clearMoves(moves);
+                                numbersOfAllPossibleMoves = 0;
                             }
 
-                            if (board[i-1][j-1] >= 'a' - player * 32 && board[i-1][j-1] <= 'z' - player * 32){
-                                if (_acceptAllMoves){
-                                    _acceptAllMoves = false;
-                                    clearMoves(moves);
-                                    numbersOfAllPossibleMoves = 0;
-                                }
+                            moves[moveToInt(i,j,i-1,j+1)]  = true;
+                            numbersOfAllPossibleMoves++;
+                        }
 
-                                moves[moveToInt(i,j,i-1,j-1)]  = true;
-                                numbersOfAllPossibleMoves++;
+                        if (j-1 >= 0 && board[i-1][j-1] >= 'a' - player * 32 && board[i-1][j-1] <= 'z' - player * 32){
+                            if (_acceptAllMoves){
+                                _acceptAllMoves = false;
+                                clearMoves(moves);
+                                numbersOfAllPossibleMoves = 0;
                             }
+
+                            moves[moveToInt(i,j,i-1,j-1)]  = true;
+                            numbersOfAllPossibleMoves++;
                         }
                     } else { //white
                         if (board[i+1][j] == ' '){
@@ -134,32 +129,27 @@ int determineLegalMoves(bool moves[4096], int player, char board[8][8], bool *_i
                                 }
                             }
                         }
-                        //checks if the move is out of board
-                        if (j-1 < 0 || j+1 > 7){
-                            break;
                         //checks if the pawn can captcher another piece
-                        } else {
-                            if (board[i+1][j+1] >= 'a' - player * 32 && board[i+1][j+1] <= 'z' - player * 32){
-                                if (_acceptAllMoves){ // Only clears all Moves once at the first time a take move got located.
-                                    _acceptAllMoves = false;
-                                    clearMoves(moves);
-                                    numbersOfAllPossibleMoves = 0;
-                                }
-
-                                moves[moveToInt(i,j,i+1,j+1)]  = true;
-                                numbersOfAllPossibleMoves++;
+                        if (j+1 <=7 && board[i+1][j+1] >= 'a' - player * 32 && board[i+1][j+1] <= 'z' - player * 32){
+                            if (_acceptAllMoves){ // Only clears all Moves once at the first time a take move got located.
+                                _acceptAllMoves = false;
+                                clearMoves(moves);
+                                numbersOfAllPossibleMoves = 0;
                             }
 
-                            if (board[i+1][j-1] >= 'a' - player * 32 && board[i+1][j-1] <= 'z' - player * 32){
-                                if (_acceptAllMoves){
-                                    _acceptAllMoves = false;
-                                    clearMoves(moves);
-                                    numbersOfAllPossibleMoves = 0;
-                                }
+                            moves[moveToInt(i,j,i+1,j+1)]  = true;
+                            numbersOfAllPossibleMoves++;
+                        }
 
-                                moves[moveToInt(i,j,i+1,j-1)]  = true;
-                                numbersOfAllPossibleMoves++;
+                        if (j-1 >= 0 && board[i+1][j-1] >= 'a' - player * 32 && board[i+1][j-1] <= 'z' - player * 32){
+                            if (_acceptAllMoves){
+                                _acceptAllMoves = false;
+                                clearMoves(moves);
+                                numbersOfAllPossibleMoves = 0;
                             }
+
+                            moves[moveToInt(i,j,i+1,j-1)]  = true;
+                            numbersOfAllPossibleMoves++;
                         }
                     }
 
