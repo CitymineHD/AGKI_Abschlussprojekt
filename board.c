@@ -57,7 +57,7 @@ int moveToInt(char a, char b, char c, char d){
     return a * 8 * 8 * 8 + b * 8 * 8 + c * 8 + d;
 }
 
-int determineLegalMoves(bool moves[4096], int player, char board[8][8]){
+int determineLegalMoves(bool moves[4096], int player, char board[8][8], bool *_isHittingMove){ //_isHittingMove saves the type of move
     //determines legal moves in position of board for player (1 for white, 0 for black) and writes them into a bool array (moves)
     //every 4096 values of the bool array stands for a move where the first two letters is the i (1-8) and the j (A-H) location of the piece and
     // the next two letters are for the i and j possition of the aim of the piece
@@ -257,6 +257,9 @@ int determineLegalMoves(bool moves[4096], int player, char board[8][8]){
                 }
             }
         }
+
+        //saves the type of move // capter move or no capture move
+        *_isHittingMove = !_acceptAllMoves;
 
         return numbersOfAllPossibleMoves;
     }
