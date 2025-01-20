@@ -13,3 +13,4 @@ testNetworkFailed
 SavedNetworks/*
 .testNetwork
 .untrainedNetwork
+.trainedNetwork
