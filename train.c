@@ -56,9 +56,6 @@ int main(int argc, char **argv){
                 return -1;
             }
             updateBoard(board, currentMove); //actually perform move
-            system("clear");
-            printBoardToTerminal(board);
-            sleep(1);
             //dynamic allocation for replay memory
             if (numMoves<capacity){
                 movesMade[numMoves] = currentMove;
@@ -85,8 +82,7 @@ int main(int argc, char **argv){
             printf(" ---Draw by repitition--- ");
             outcome = 0;
             numMoves = numMoves - 970; //disregard most of the repeating moves in this case as to not train weirdly
-        }
-        if(player == 1){
+        }else if(player == 1){
             printf("---White won!---");
             outcome = 1; //if white won, we want the outcome to start at win
         }else{
@@ -108,6 +104,9 @@ int main(int argc, char **argv){
             }
             outcome *= -1;
             updateBoard(board, movesMade[movesPropped]); //apply move
+            /*system("clear");
+            printBoardToTerminal(board);
+            sleep(1);*/
         }
         printf("done!\n");
         fflush(stdout);
