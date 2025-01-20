@@ -37,14 +37,15 @@ void initializeBoard(char board[8][8]){
 }
 
 void printBoardToTerminal(char board[8][8]){
-    printf("---------------------------------\n");
-    for (int i = 0; i < 8; i++){
-        printf("|");
-        for (int j = 0; j < 8; j++){
+    printf("  ---------------------------------\n");
+    for (int i = 7; i >= 0; i--){
+        printf("%d |",i+1);
+        for (int j = 7; j >= 0; j--){
             printf(" %c |", board[i][j]);
         }
-        printf("\n---------------------------------\n");
+        printf("\n  ---------------------------------\n");
     }
+    printf("    A   B   C   D   E   F   G   H\n");
 }
 
 void clearMoves (bool moves[4096]){
