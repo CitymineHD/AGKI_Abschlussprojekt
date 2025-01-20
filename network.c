@@ -3,6 +3,8 @@
 #include <time.h>
 #include <math.h>
 #include <stdbool.h>
+#include <string.h>
+#include <float.h>
 
 #include "agent.h"
 #include "antichess.h"
@@ -31,52 +33,100 @@ void initial_network_weights(double network_weights_input[Number_of_Hidden_Neuro
     }
 }
 
-void softmax(double *output, double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons], bool legal_moves[Number_of_Output_Neurons]) {
+void softmax(double *output, double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons], bool legal_moves[Number_of_Output_Neurons], double amplifier) {
+    //performs softmax over legal moves in output layer to create a probability distribution
+    //illegal moves are set to 0 likelyhood in output
+    //values are multiplied by amplifier before being plugged into softmax to allow for more or less tendency to pick higher value moves
+    
     double divisor = 0;
 
     for (int i = 0; i < Number_of_Output_Neurons; i++) {
         if (legal_moves[i]) {
-            divisor += activated_neurons[Number_of_Layer-2][i];
+            divisor += exp(activated_neurons[Number_of_Layer-2][i]*amplifier);
         }
     }
 
     for (int i = 0; i < Number_of_Output_Neurons; i++) {
         if (legal_moves[i]) {
-            output[i] = activated_neurons[Number_of_Layer-2][i] / divisor;
+            output[i] = exp(activated_neurons[Number_of_Layer-2][i]*amplifier) / divisor;
         } else {
             output[i] = 0;
         }
     }
 }
 
-void readFromFile(char *filename){
+int determineMove(double distribution[Number_of_Output_Neurons]){
+    //randomly determines which move to use
+    //expects softmaxed distibution
+    srand((unsigned int)time(NULL)); //initializing pseudorandom numbers
+    double randNum = (double)rand() / RAND_MAX; //randomly generated number to choose move
+    double sum = 0; //where in the sum of skipped possible moves we currently are
+    for (int i = 0; i < Number_of_Output_Neurons; i++){
+        sum += distribution[i]; // adding current probability to accumulated probability
+        if (randNum <= sum){
+            return i; //return index if randNum is less than accumulated value after adding
+        }
+    }
+    return -1; //this should never happen, returning nonsensical value
+}
+
+void readFromFile(char *filename, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons]){
     //reads all the weights and biases from filename into the arrays in order of declaration
     FILE *f = fopen(filename, "r");
-
+    char *line = NULL;
+    size_t len = 0;
+    getline(&line, &len, f); //skip descriptor line
+    //for input layer
+    for (int i = 0; i < Number_of_Hidden_Neurons; i++){
+        for (int j = 0; j < Number_of_Input_Neurons; j++){
+            getline(&line, &len, f); //read line
+            line[strlen(line)-1] = '\0'; //remove newline
+            network_weights_input[i][j] = atof(line);
+        }
+    }
+    getline(&line, &len, f); //skip descriptor line
+    //for output layer
+    for (int i = 0; i < Number_of_Output_Neurons; i++){
+        for (int j = 0; j < Number_of_Hidden_Neurons; j++){
+            getline(&line, &len, f); //read line
+            line[strlen(line)-1] = '\0'; //remove newline
+            network_weights_output[i][j] = atof(line);
+        }
+    }
+    getline(&line, &len, f); //skip descriptor line
+    //for thresholds
+    for (int i = 0; i < Number_of_Layer-1; i++){
+        for (int j = 0; j < Number_of_Output_Neurons; j++){
+            getline(&line, &len, f); //read line
+            line[strlen(line)-1] = '\0'; //remove newline
+            threshold[i][j] = atof(line);
+        }
+    }
+    free(line);
     fclose(f);
 }
 
 void writeToFile(char *filename, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons]){
     //writes all the weights and biases into filename in order of declaration
     FILE *f = fopen(filename, "w");
-    fprintf(f, "Number of Input Neuron, Weight\n");
+    fprintf(f, "Input Weights\n");
     for (int i = 0; i < Number_of_Hidden_Neurons; i++){
         for (int j = 0; j < Number_of_Input_Neurons; j++){
-            fprintf(f, "%d: %f\n", i, network_weights_input[i][j]);
+            fprintf(f, "%.*e\n", DECIMAL_DIG, network_weights_input[i][j]);
         }
     }
-    fprintf(f, "Number of Output Neuron, Weight\n");
+    fprintf(f, "Output Weights\n");
     //for output layer
     for (int i = 0; i < Number_of_Output_Neurons; i++){
         for (int j = 0; j < Number_of_Hidden_Neurons; j++){
-            fprintf(f, "%d: %f\n", i, network_weights_output[i][j]);
+            fprintf(f, "%.*e\n", DECIMAL_DIG, network_weights_output[i][j]);
         }
     }
-    fprintf(f, "Number of Layer/Neuron, Threshold\n");
+    fprintf(f, "Thresholds\n");
     //for biases
     for (int i = 0; i < Number_of_Layer-1; i++){
         for (int j = 0; j < Number_of_Output_Neurons; j++){
-            fprintf(f, "%d/%d: %f\n", i, j, threshold[i][j]);
+            fprintf(f, "%.*e\n", DECIMAL_DIG, threshold[i][j]);
         }
     }
 
@@ -125,10 +175,10 @@ void hidden_layer(int layer, int neuron_number, int temp_board[8][8], int player
 }
 
 void input_layer(char board[8][8], int player, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]) {
-    int temp_board[8][8];
+    double temp_board[8][8];
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
-            temp_board[x][y] = board[x][y]/100; //convert chars into integer
+            temp_board[x][y] = board[x][y]/100; //convert chars into double and squash down to reduce erratic behaviour
         }
     }
     //starting network stuff

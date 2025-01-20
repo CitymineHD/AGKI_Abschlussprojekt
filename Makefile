@@ -1,4 +1,2 @@
 all:
-	gcc game.c network.c board.c -o agent_test -lm -g -O0
-release:
-	gcc game.c network.c board.c -o agent_test -lm
+	gcc train.c network.c board.c -o train -lm

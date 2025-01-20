@@ -11,3 +11,5 @@ backprop.c
 testNetwork
 testNetworkFailed
 SavedNetworks/*
+.testNetwork
+.untrainedNetwork
