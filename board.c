@@ -40,7 +40,7 @@ void printBoardToTerminal(char board[8][8]){
     printf("  ---------------------------------\n");
     for (int i = 7; i >= 0; i--){
         printf("%d |",i+1);
-        for (int j = 7; j >= 0; j--){
+        for (int j = 0; j < 8; j++){
             printf(" %c |", board[i][j]);
         }
         printf("\n  ---------------------------------\n");
