@@ -141,7 +141,16 @@ void writeToFile(char *filename, double network_weights_input[Number_of_Hidden_N
 
 //sigmoid function
 double sigmoid(double x) {
-    return 1 / (1 + exp(-x));
+    double out = 1 / (1 + exp(-x));
+    if (out == out){
+        return out;
+    }else{ //catching nan just in case
+        if(x<0){
+            return 0;
+        }else{
+            return 1;
+        }
+    }
 }
 
 void output_layer(int layer, int neuron_number, int player, double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]) {
@@ -206,7 +215,12 @@ void input_layer(char board[8][8], int player, double network_weights_input[Numb
 
 double sigderiv(double x){
     //derivative of sigmoid for gradient calculations
-    return exp(-x)/((exp(-x)+1)*(exp(-x)+1));
+    double out = exp(-x)/((exp(-x)+1)*(exp(-x)+1));
+    if (out == out){
+        return out;
+    }else{
+        return 0; //catching NaN problems when exponential function bricks
+    }
 }
 
 double* getExpected(char board[8][8], int player, int move, int outcome, bool legal_moves[Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]){
