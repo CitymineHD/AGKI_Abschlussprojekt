@@ -16,7 +16,7 @@ int main(void){
 
     double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons];
     bool legal_moves[Number_of_Output_Neurons];
-    double eta = 0.02; //0.02 seems stable and reasonably fast, gotta test for differnt uses in actual training
+    double eta = 5000; //0.02 seems stable and reasonably fast, gotta test for differnt uses in actual training
     double deltaInputWeights[Number_of_Hidden_Neurons][Number_of_Input_Neurons];    //array for the summed up gradients for weights between input and hidden layer and hidden and output layer (respectively), needs to be multiplied by eta and then added to the actual network
     double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons];  //order is [intoNeuronNumber][outOfNeuronNumber]
     double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons];            //same, but for biases, [layerNumber][neuronNumber], layer 0 is first hidden layer

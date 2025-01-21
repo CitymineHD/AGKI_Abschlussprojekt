@@ -209,7 +209,7 @@ double sigderiv(double x){
     return exp(-x)/((exp(-x)+1)*(exp(-x)+1));
 }
 
-double* getExpected(char board[8][8], int player, int move, int outcome, bool legal_moves[Number_of_Output_Neurons]){
+double* getExpected(char board[8][8], int player, int move, int outcome, bool legal_moves[Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons]){
     //get desired values of output neurons based on move, board state and outcome of game (will need legalMoves function)
     bool _isHittingMove; //determineLegalMoves wants this, we don't need it
     double* expected = malloc(sizeof(double)*Number_of_Output_Neurons);
@@ -239,7 +239,8 @@ double* getExpected(char board[8][8], int player, int move, int outcome, bool le
                 }
             }
         }else{
-            expected[i]=0; //we want no illegal moves
+            //expected[i]=0; //we want no illegal moves
+            expected[i]=activated_neurons[1][i]; //assigning no cost to illegal moves at all, since they are excluded from the softmax, this might reduce noise
         }
     }
     return expected;
@@ -301,9 +302,9 @@ void runNetworkFlo(char board[8][8], int player, double network_weights_input[Nu
 void backpropStep(char board[8][8], int player, int move, int outcome, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons], double activated_neurons[Number_of_Layer-1][Number_of_Output_Neurons], bool legal_moves[Number_of_Output_Neurons], double deltaInputWeights[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons]) {
     //calculates the gradients of cost function with respect to the weights and biases for one move in one specified board state considering whether or not the agent won (outcome is 1 if won, -1 if lost, 0 if draw)
     //sums them up and writes them into deltaWeights and deltaThresholds, they will need to be eta'd and added outside of this function
-    double *expected = getExpected(board, player, move, outcome, legal_moves); //desired outputs to calculate cost function (e_n in scribbles) is a pointer, gets sizeofdouble**Number_of_Output_Neurons memory
-    double nosigNeurons[Number_of_Layer-1][Number_of_Output_Neurons]; //saving neurons without sigmoid squish, because invsig got unfriendly when close to desired output
     input_layer(board, player, network_weights_input, network_weights_output, threshold, activated_neurons); //rerunning network for current board state to get values into activated_neurons, we could also save these over the course of a game but that would take a lot of memory
+    double *expected = getExpected(board, player, move, outcome, legal_moves, activated_neurons); //desired outputs to calculate cost function (e_n in scribbles) is a pointer, gets sizeofdouble**Number_of_Output_Neurons memory
+    double nosigNeurons[Number_of_Layer-1][Number_of_Output_Neurons]; //saving neurons without sigmoid squish, because invsig got unfriendly when close to desired output
     double inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
