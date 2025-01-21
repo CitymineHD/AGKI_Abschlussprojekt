@@ -184,7 +184,7 @@ void input_layer(char board[8][8], int player, double network_weights_input[Numb
     double temp_board[8][8];
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
-            temp_board[x][y] = board[x][y]/100; //convert chars into double and squash down to reduce erratic behaviour
+            temp_board[x][y] = (double)board[x][y]/100; //convert chars into double and squash down to reduce erratic behaviour
         }
     }
     //starting network stuff
@@ -274,7 +274,7 @@ void runNetworkFlo(char board[8][8], int player, double network_weights_input[Nu
     double inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
-            inputNeurons[(i*8)+j]=board[i][j]/100; //saving chars from board into inputNeurons
+            inputNeurons[(i*8)+j]=(double)board[i][j]/100; //saving chars from board into inputNeurons
         }
     }
     inputNeurons[Number_of_Input_Neurons-1] = player; // saving final input value that doesn't come from board array
@@ -307,7 +307,8 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
     double inputNeurons[Number_of_Input_Neurons];
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
-            inputNeurons[(i*8)+j]=board[i][j]/100; //saving chars from board into inputNeurons
+            inputNeurons[(i*8)+j]=(double)board[i][j]/100; //saving chars from board into inputNeurons
+            
         }
     }
     inputNeurons[Number_of_Input_Neurons-1] = player; // saving final input value that doesn't come from board array
