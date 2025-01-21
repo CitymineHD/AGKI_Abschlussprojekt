@@ -21,17 +21,17 @@ int main(void){
     double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons];  //order is [intoNeuronNumber][outOfNeuronNumber]
     double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons];            //same, but for biases, [layerNumber][neuronNumber], layer 0 is first hidden layer
     initializeDeltas(deltaInputWeights, deltaOutputWeights, deltaThresholds);
-    //initial_network_weights(network_weights_input, network_weights_output, threshold);
-    readFromFile(".trainedNetwork", network_weights_input, network_weights_output, threshold);
+    initial_network_weights(network_weights_input, network_weights_output, threshold);
+    //readFromFile(".trainedNetwork", network_weights_input, network_weights_output, threshold);
     //run_network(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
     //printf("RunLucas says: %f\n", activated_neurons[1][796]);
     runNetworkFlo(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
     bool _isHittingMove;
     determineLegalMoves(legal_moves, player, board, &_isHittingMove);
-    int numProp = 100; //number of testing backprops
+    int numProp = 1000; //number of testing backprops
     printf("this is test. pls take a moment to pray this works.\n               neuron for e2e4:             %f, other neuron at %f\n", activated_neurons[1][796], activated_neurons[1][405]);
     for (int j = 0; j < numProp; j++){
-        backpropStep(board, player, 796, 1, network_weights_input, network_weights_output, threshold, activated_neurons, legal_moves, deltaInputWeights, deltaOutputWeights, deltaThresholds);
+        backpropStep(board, player, 796, -1, network_weights_input, network_weights_output, threshold, activated_neurons, legal_moves, deltaInputWeights, deltaOutputWeights, deltaThresholds);
         //printf("RunLucas says: %f\n", activated_neurons[1][796]);
         applyDeltas(network_weights_input, network_weights_output, threshold, deltaInputWeights, deltaOutputWeights, deltaThresholds, eta);
         //run_network(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
@@ -46,11 +46,11 @@ int main(void){
             printf("Move %d has probability %f\n", i, distribution[i]);
         }
     }
-    for (int i = 0; i < 5000; i++){
+    /*for (int i = 0; i < 5000; i++){
         int move = determineMove(distribution);
         if (move != 796)
         printf("Choosing move %d\n", move);
-    }
+    }*/
     //writeToFile(".testNetwork", network_weights_input, network_weights_output, threshold);
     return 0;
 }

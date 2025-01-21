@@ -228,7 +228,7 @@ double* getExpected(char board[8][8], int player, int move, int outcome, bool le
                 if (i == move){
                     expected[i]=0; //we don't want the move we took since we lost with it
                 }else{
-                    expected[i]=1/(sumLegalMoves-1); //we want all other moves to be equally likely since we want one of them but can't say which one
+                    expected[i]=1.0/(sumLegalMoves-1); //we want all other moves to be equally likely since we want one of them but can't say which one
                 }
             }else if (outcome == 0){
                 //drew, we take half of both the win and loss calculations

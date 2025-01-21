@@ -296,9 +296,8 @@ void updateBoard(char board[8][8], int move){ // move value between 0 and 4095
     }
 }
     
-int moveFromPlayer(){
+int moveFromPlayer(char *input){
     //only possible notation is for Example: e2e4 (No Capital Letters);
-    char input[5];
     scanf("%4s",input);
     if (strlen(input) == 4){
         return moveToInt(input[1]-'1',input[0]-'a',input[3]-'1',input[2]-'a');
@@ -383,7 +382,8 @@ void playerVsBadAi(bool color){ //true = Weiß || false = Schwarz
             anz = determineLegalMoves(moves, player, board, &egal);
             if (anz != 0){
                 while (!passt){
-                    move = moveFromPlayer();
+                    char input[100];
+                    move = moveFromPlayer(input);
                     if (move >= 0 && move <= 4096 && checkMove(moves, move)){
                         passt = true;
                     } else {
