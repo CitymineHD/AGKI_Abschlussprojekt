@@ -44,7 +44,7 @@ int main(int argc, char **argv){
         initializeBoard(board);
         bool isCaptureMove;
         //loop for one game
-        while((determineLegalMoves(legalMoves, player, board, &isCaptureMove)!=0) && (timesNotCaptured < 1000)){
+        while((determineLegalMoves(legalMoves, player, board, &isCaptureMove)!=0) && (timesNotCaptured < 100)){
             //run until a player has no legal moves or until we didn't capture 1000 times (draw by repitition)
             run_network(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
             softmax(distribution, activated_neurons, legalMoves, 5); //testing relatively low amplifier to allow for exploration
@@ -56,7 +56,8 @@ int main(int argc, char **argv){
                 //return -1;
             }else if (!legalMoves[currentMove]){
                 fprintf(stderr, "Network wants to do illegal move for some reason :(\n");
-                return -1;
+                goto trashGame; //trashing game, starting next one in for loop
+                //return -1;
             }
             updateBoard(board, currentMove); //actually perform move
             //dynamic allocation for replay memory
@@ -81,15 +82,15 @@ int main(int argc, char **argv){
             }
         }
         //catch draw by repitition
-        if (timesNotCaptured == 1000){
+        if (timesNotCaptured == 100){
             printf(" ---Draw by repitition--- ");
             outcome = 0;
-            numMoves = numMoves - 970; //disregard most of the repeating moves in this case as to not train weirdly
+            numMoves = numMoves - 80; //disregard most of the repeating moves in this case as to not train weirdly
         }else if(player == 1){
-            printf("---White won!---");
+            printf(" ---White won!--- ");
             outcome = 1; //if white won, we want the outcome to start at win
         }else{
-            printf("---Black won!---");
+            printf(" ---Black won!--- ");
             outcome = -1; //if black won, the initial outcome is a loss, because white starts in backprop
             player = 1; //reset player to white
         }
@@ -115,6 +116,12 @@ int main(int argc, char **argv){
         fflush(stdout);
         trashGame:
         free(movesMade);
+        if ((numGames%100 == 0) && (numGames != 0)){
+            printf("Writing file... ");
+            fflush(stdout);
+            writeToFile(argv[2], network_weights_input, network_weights_output, threshold);
+            printf("File written!\n");
+        }
     }
 
 
