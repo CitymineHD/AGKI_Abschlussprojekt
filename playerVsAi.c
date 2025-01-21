@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 
 #include "antichess.h"
 #include "agent.h"
@@ -35,6 +36,7 @@ int playerVsAi(bool playerColor, char* filename){
     int playerMove = -1;
     int winner = 0; // 0 = draw || 1 = player won || -1 = AI won
     bool passt = false;
+    bool showSoftmax = true;
     double distribution[Number_of_Output_Neurons]; //distribution for network moves
     
     while (anz != 0 && drawTime <= 50){
@@ -48,8 +50,14 @@ int playerVsAi(bool playerColor, char* filename){
                     playerMove = moveFromPlayer(input);
                     if (playerMove >= 0 && playerMove <= 4096 && checkMove(moves, playerMove)){
                         passt = true;
-                    } else if (strcomp(input, "softmax")==0){
-                        //TODO print softmax distribution
+                    } else if (strcmp(input, "softmax")==0){
+                        if (showSoftmax==false){
+                            printf("showing softmax distribution on next AI move. Now please make your move.\n");
+                            showSoftmax = true;
+                        }else{
+                            printf("n longer showing softmax distribution on next AI move. Now please make your move.\n");
+                            showSoftmax = false;
+                        }
                     }else {
                         printf("Nicht gültiger Zug!\n");
                         printAllPossibleMoves(moves); //prints all Legal Moves as humanReadable Input
@@ -68,6 +76,14 @@ int playerVsAi(bool playerColor, char* filename){
             hittingMove ? drawTime = 0 : drawTime++;
             run_network(board, aiColour, network_weights_input, network_weights_output, threshold, activated_neurons);
             softmax(distribution, activated_neurons, moves, 5); //testing relatively low amplifier to allow for exploration
+            if (showSoftmax){
+                printf("This is the softmax-distribution for the AI for this move:\n");
+                for (int i = 0; i < Number_of_Output_Neurons; i++){
+                    if (distribution[i]!=0){
+                        printf("Move %d has chance %f to be played.\n", decToOct(i), distribution[i]);
+                    }
+                }
+            }
             int aiMove = determineMove(distribution); //choose random move according to softmaxed distribution
             printf("AI plays move %d\n", decToOct(aiMove));
             //catching errors (hopefully irrellevant)
