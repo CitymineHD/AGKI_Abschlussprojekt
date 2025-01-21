@@ -52,7 +52,8 @@ int main(int argc, char **argv){
             //catching errors (hopefully irrellevant)
             if (currentMove < 0 || currentMove > Number_of_Output_Neurons-1){
                 fprintf(stderr, "something went very, very wrong\n");
-                return -1;
+                goto trashGame; //trashing game, starting next one in for loop
+                //return -1;
             }else if (!legalMoves[currentMove]){
                 fprintf(stderr, "Network wants to do illegal move for some reason :(\n");
                 return -1;
@@ -112,6 +113,8 @@ int main(int argc, char **argv){
         }
         printf("done!\n");
         fflush(stdout);
+        trashGame:
+        free(movesMade);
     }
 
 

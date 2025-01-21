@@ -67,7 +67,13 @@ int determineMove(double distribution[Number_of_Output_Neurons]){
             return i; //return index if randNum is less than accumulated value after adding
         }
     }
-    return -1; //this should never happen, returning nonsensical value
+    int out = 0;
+    for (int i = 0; i < Number_of_Output_Neurons; i++){
+        if (distribution[i]!=0){
+            out = i;
+        }
+    }
+    return out; //returning last legal move if we break out of upper loop, assuming that happens if the sum is slightly less than one due to float problems (and we roll a random number really close to 1) 
 }
 
 void readFromFile(char *filename, double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons], double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons], double threshold[Number_of_Layer-1][Number_of_Output_Neurons]){
