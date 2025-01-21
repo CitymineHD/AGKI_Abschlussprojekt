@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "antichess.h"
 #include "agent.h"
@@ -10,6 +11,7 @@ int main(int argc, char **argv){
         fprintf(stderr, "please provide the following arguments: fileToRead, fileToWrite, numGamesToTrain\n");
         return -1;
     }
+    srand((unsigned int)time(NULL)); //initializing pseudorandom numbers
     double network_weights_input[Number_of_Hidden_Neurons][Number_of_Input_Neurons];
     double network_weights_output[Number_of_Output_Neurons][Number_of_Hidden_Neurons];
     double threshold[Number_of_Layer-1][Number_of_Output_Neurons];

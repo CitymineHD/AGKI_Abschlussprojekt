@@ -58,7 +58,7 @@ void softmax(double *output, double activated_neurons[Number_of_Layer-1][Number_
 int determineMove(double distribution[Number_of_Output_Neurons]){
     //randomly determines which move to use
     //expects softmaxed distibution
-    srand((unsigned int)time(NULL)); //initializing pseudorandom numbers
+    //needs srand to have run
     double randNum = (double)rand() / RAND_MAX; //randomly generated number to choose move
     double sum = 0; //where in the sum of skipped possible moves we currently are
     for (int i = 0; i < Number_of_Output_Neurons; i++){

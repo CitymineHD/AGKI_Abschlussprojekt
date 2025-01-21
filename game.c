@@ -1,9 +1,12 @@
 #include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
 
 #include "antichess.h"
 #include "agent.h"
 
 int main(void){
+    srand((unsigned int)time(NULL)); //initializing pseudorandom numbers
     char board[8][8]; 
     int player = 1; //variable for player whose turn it is, 1 for white, 0 for black
     initializeBoard(board);
@@ -43,6 +46,8 @@ int main(void){
             printf("Move %d has probability %f\n", i, distribution[i]);
         }
     }
+    for (int i = 0; i < 5000; i++)
+        printf("Choosing move %d\n", determineMove(distribution));
     //writeToFile(".testNetwork", network_weights_input, network_weights_output, threshold);
     return 0;
 }
