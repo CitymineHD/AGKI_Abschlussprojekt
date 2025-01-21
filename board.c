@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <ctype.h>
+#include <string.h>
 
-#include "antichess.h"
+// #include "antichess.h"
 
 
 //setting up the pieces in starting position
@@ -58,7 +60,7 @@ int moveToInt(char a, char b, char c, char d){
     return a * 8 * 8 * 8 + b * 8 * 8 + c * 8 + d;
 }
 
-int determineLegalMoves(bool moves[4096], int player, char board[8][8], bool *_isHittingMove){ //_isHittingMove saves the type of move
+int determineLegalMoves( bool moves[4096], int player, char board[8][8], bool *_isHittingMove){ //_isHittingMove saves the type of move
     //determines legal moves in position of board for player (1 for white, 0 for black) and writes them into a bool array (moves)
     //every 4096 values of the bool array stands for a move where the first two letters is the i (1-8) and the j (A-H) location of the piece and
     // the next two letters are for the i and j possition of the aim of the piece
@@ -203,6 +205,7 @@ int determineLegalMoves(bool moves[4096], int player, char board[8][8], bool *_i
                     for (int d = 1; d < 9 ; d++){ //its starts at 1 and end at 8 so its easier for the % 3 opperation to locate the direction
                         //Locates the Direction of the piece (Goes in every Direction around the piece)
                         int iDirection, jDirection;
+
                         iDirection = d % 3 == 0 ? 0 : d % 3 == 1 ? 1 : -1;
                         jDirection = d / 3 == 0 ? 0 : d / 3 == 1 ? 1 : -1;
                         
@@ -245,41 +248,188 @@ int determineLegalMoves(bool moves[4096], int player, char board[8][8], bool *_i
                     }
 
                     break;
-                }
+            }
+        }
+    }
+
+    //saves the type of move // capter move or no capture move
+    *_isHittingMove = !_acceptAllMoves;
+
+    return numbersOfAllPossibleMoves;
+}
+
+int decToOct(int dec){//decimal number to octal number
+    int oct[4];
+    for (int i = 3; i >= 0; i--){
+        oct[i] = dec % 8;
+        dec /= 8;
+    }
+
+    int erg = oct[0] * 1000 + oct[1] * 100 + oct[2] * 10 + oct[3];
+    return erg;
+}
+
+void splitMoveIntoSingleDigits(int moveData[4], int move){
+    //quick and dirty
+    moveData[0] = move / 1000;
+    moveData[1] = (move / 100) % 10;
+    moveData[2] = (move / 10) % 10;
+    moveData[3] = move % 10;
+}
+
+void updateBoard(char board[8][8], int move){ // move value between 0 and 4095
+    //transform the decimal int to an octal int and splits i  into its single digits
+    int moveData[4];
+    splitMoveIntoSingleDigits(moveData, decToOct(move));
+
+    //Perform the Move
+    board[moveData[2]][moveData[3]] = board[moveData[0]][moveData[1]];
+    board[moveData[0]][moveData[1]] = ' ';
+
+    //remove pawns after reaching the end (no Promotion just vanished)
+    if (board[moveData[2]][moveData[3]] == 'p' && moveData[2] == 7){
+        board[moveData[2]][moveData[3]] = ' ';
+    }
+
+    if (board[moveData[2]][moveData[3]] == 'P' && moveData[2] == 0){
+        board[moveData[2]][moveData[3]] = ' ';
+    }
+}
+    
+int moveFromPlayer(){
+    //only possible notation is for Example: e2e4 (No Capital Letters);
+    char input[5];
+    scanf("%4s",input);
+    if (strlen(input) == 4){
+        return moveToInt(input[1]-'1',input[0]-'a',input[3]-'1',input[2]-'a');
+    }
+
+    return -1;
+}
+
+
+void AiVsAiNoBrain(int howManyMoves){
+    //every move is just the first legal move who was found
+    bool moves[4096];
+
+    char board[8][8];
+    initializeBoard(board);
+    int anz = 1; int moveCount = 0;
+    bool egal = false; //dont need this here but its nessesary for the method determineLegalMoves
+    while (anz!= 0 && moveCount <= howManyMoves){
+        if (moveCount % 2){
+            anz = determineLegalMoves(moves, 0, board, &egal);
+        } else {
+            anz = determineLegalMoves(moves, 1, board, &egal);
+        }
+        
+        printf("------------------Zug: %d ----------------------\n",moveCount);
+        printBoardToTerminal(board);
+        printf("Move: %d\tSpieler: %s\tZüge: %d\t",moveCount, moveCount % 2 ? "Schwarz" : "Weiß",anz);
+        for (int i=0; i<4096; i++){
+            if (moves[i]){
+                updateBoard(board, i);
+                printf("Next Move: %d\n", decToOct(i));
+                break;
             }
         }
 
-        //saves the type of move // capter move or no capture move
-        *_isHittingMove = !_acceptAllMoves;
-
-        return numbersOfAllPossibleMoves;
+        moveCount++;
     }
 
-    int decToOct(int dec){//decimal number to octal number
-        int oct[4];
-        for (int i = 3; i >= 0; i--){
-            oct[i] = dec % 8;
-            dec /= 8;
+    printf("\n");
+    
+}
+
+bool checkMove(bool moves[4096], int move){
+    //if the move is in the moveslist return true else false
+    for (int i = 0; i < 4096; i++)
+    {
+        if (moves[i] && i == move){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void printAllPossibleMoves(bool moves[4096]){
+    //TODO
+    for (int i = 0; i < 4096; i++)
+    {
+        if (moves[i]){
+            printf("%d\n", decToOct(i));
+        }
+    }
+    // printf("Noch nicht verfügbar sry :< ");
+}
+
+void playerVsBadAi(bool color){ //true = Weiß || false = Schwarz
+    //starting color is the color of the player
+    //the color switches each move and determen if the player or the Ai is moving
+    bool moves[4096];
+    char board[8][8];
+    initializeBoard(board);
+    int anz = -1; //anz possible moves
+    int move = -1; 
+    int badAi = color ? 0 : 1;
+    int player = color ? 1 : 0;
+    bool winner; //true = Player won || false = Ai won
+    bool passt = false;
+    bool egal = false; //dont need this information but its necessary
+    while (anz != 0){
+        printBoardToTerminal(board);
+        if (color){ //player
+            anz = determineLegalMoves(moves, player, board, &egal);
+            if (anz != 0){
+                while (!passt){
+                    move = moveFromPlayer();
+                    if (move >= 0 && move <= 4096 && checkMove(moves, move)){
+                        passt = true;
+                    } else {
+                        printf("Nicht gültiger Zug!\n");
+                        printAllPossibleMoves(moves); //prints all Legal Moves as humanReadable Input
+                    }
+                }
+
+                passt = false;
+            } else {
+                winner = true;
+                break;
+            }
+            
+            updateBoard(board,move);
+        } else { //BadAi
+        //TODO
+            int possibleMovesCount = determineLegalMoves(moves, badAi, board, &egal);
+            printAllPossibleMoves(moves);
+            if (possibleMovesCount == 0){
+                winner = false;
+                break;
+            }
+
+            for (int i = 0; i < 4096; i++){
+                if (moves[i]){
+                    updateBoard(board,i);
+                    break;
+                }
+            }                
         }
 
-        int erg = oct[0] * 1000 + oct[1] * 100 + oct[2] * 10 + oct[3];
-        return erg;
+        color = !color;
     }
+}
 
-    void splitMoveIntoSingleDigits(int moveData[4], int move){
-        //quick and dirty
-        moveData[0] = move / 1000;
-        moveData[1] = (move / 100) % 10;
-        moveData[2] = (move / 10) % 10;
-        moveData[3] = move % 10;
-    }
+// main is only for testing
+// int main(){
 
-    void updateBoard(char board[8][8], int move){ // move value between 0 and 4095
-        //transform the decimal int to an octal int and splits i  into its single digits
-        int moveData[4];
-        splitMoveIntoSingleDigits(moveData, decToOct(move));
+//     // AiVsAiNoBrain(10);
+//     playerVsBadAi(true);
+    
+// }
 
-        //Perform the Move
-        board[moveData[2]][moveData[3]] = board[moveData[0]][moveData[1]];
-        board[moveData[0]][moveData[1]] = ' ';
-    }
+
+
+
+
+
