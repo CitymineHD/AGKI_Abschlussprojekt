@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 
 #include "antichess.h"
 #include "agent.h"
@@ -22,11 +23,16 @@ int main(int argc, char **argv){
     double deltaOutputWeights[Number_of_Output_Neurons][Number_of_Hidden_Neurons];  //order is [intoNeuronNumber][outOfNeuronNumber]
     double deltaThresholds[Number_of_Layer-1][Number_of_Output_Neurons];            //same, but for biases, [layerNumber][neuronNumber], layer 0 is first hidden layer
     initializeDeltas(deltaInputWeights, deltaOutputWeights, deltaThresholds);
-    printf("Reading file... ");
-    fflush(stdout);
-    readFromFile(argv[1], network_weights_input, network_weights_output, threshold);
-    printf("File read!\n");
-    fflush(stdout);
+    if (strcmp(argv[1], "-")==0){
+        printf("No file specified, making new random network.\n");
+        initial_network_weights(network_weights_input,network_weights_output, threshold); //if filename was "-", we make a new network
+    }else{ //otherwise, we read a file
+        printf("Reading file... ");
+        fflush(stdout);
+        readFromFile(argv[1], network_weights_input, network_weights_output, threshold);
+        printf("File read!\n");
+        fflush(stdout);
+    }
     //training loop
 
     for (int numGames = 0; numGames < atoi(argv[3]); numGames++){
@@ -98,8 +104,15 @@ int main(int argc, char **argv){
         printf(" ...backpropping... ");
         fflush(stdout);
         for (int movesPropped = 0; movesPropped < numMoves; movesPropped++){
+            printf("\nbefore %d backprop step, move (%d) neuron fires at %f, illegal one at %f\n", movesPropped, movesMade[movesPropped], activated_neurons[1][movesMade[movesPropped]], activated_neurons[1][0]);
             backpropStep(board, player, movesMade[movesPropped], outcome, network_weights_input, network_weights_output, threshold, activated_neurons, legalMoves, deltaInputWeights, deltaOutputWeights, deltaThresholds);
             applyDeltas(network_weights_input, network_weights_output, threshold, deltaInputWeights, deltaOutputWeights, deltaThresholds, eta);
+            
+            //Debugging
+            run_network(board, player, network_weights_input, network_weights_output, threshold, activated_neurons);
+            printf("after  %d backprop step, move (%d) neuron fires at %f, outcome was %d\n", movesPropped, movesMade[movesPropped], activated_neurons[1][movesMade[movesPropped]], outcome);
+            //Debugging
+
             //switch player and outcome
             if (player == 1){
                 player = 0;
@@ -116,7 +129,7 @@ int main(int argc, char **argv){
         fflush(stdout);
         trashGame:
         free(movesMade);
-        if ((numGames%100 == 0) && (numGames != 0)){
+        if ((numGames%100 == 0) && (numGames != 0) && (strcmp(argv[2], "-")!=0)){
             printf("Writing file... ");
             fflush(stdout);
             writeToFile(argv[2], network_weights_input, network_weights_output, threshold);
@@ -124,7 +137,10 @@ int main(int argc, char **argv){
         }
     }
 
-
-    writeToFile(argv[2], network_weights_input, network_weights_output, threshold);
+    if (strcmp(argv[2], "-")==0){
+        printf("Not writing output\n");
+    }else{
+        writeToFile(argv[2], network_weights_input, network_weights_output, threshold);
+    }
     return 0;
 }

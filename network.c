@@ -141,7 +141,7 @@ void writeToFile(char *filename, double network_weights_input[Number_of_Hidden_N
 
 //sigmoid function
 double sigmoid(double x) {
-    double out = 1 / (1 + exp(-x));
+    /*double out = 1 / (1 + exp(-x));
     if (out == out){
         return out;
     }else{ //catching nan just in case
@@ -150,6 +150,12 @@ double sigmoid(double x) {
         }else{
             return 1;
         }
+    }*/
+    //using ReLU instead
+    if (x <= 0){
+        return 0;
+    }else{
+        return x;
     }
 }
 
@@ -215,11 +221,17 @@ void input_layer(char board[8][8], int player, double network_weights_input[Numb
 
 double sigderiv(double x){
     //derivative of sigmoid for gradient calculations
-    double out = exp(-x)/((exp(-x)+1)*(exp(-x)+1));
+    /*double out = exp(-x)/((exp(-x)+1)*(exp(-x)+1));
     if (out == out){
         return out;
     }else{
         return 0; //catching NaN problems when exponential function bricks
+    }*/
+    //trying ReLU instead
+    if (x <= 0){
+        return 0;
+    }else{
+        return 1;
     }
 }
 
@@ -342,6 +354,7 @@ void backpropStep(char board[8][8], int player, int move, int outcome, double ne
         for (int j = 0; j < Number_of_Hidden_Neurons; j++){
             deltaOutputWeights[i][j] += preFactor*activated_neurons[0][j];
             hiddenNeuronDeriv[j] += preFactor*network_weights_output[i][j];   //saving gradients of next neurons
+            //BUGHUNT: /4096 basically doesnt change convergence, *10000 makes it faster though
         }
     }
     //now hiddenNeuronDeriv is filled with the gradients that we want the neurons in the hidden layer to have, we will use those in the next step
